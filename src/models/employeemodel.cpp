@@ -8,29 +8,55 @@
 EmployeeModel::EmployeeModel(QObject *parent)
     : QSqlQueryModel(parent)
     , m_showInactive(false)
+    , m_currentPositionFilter(0)
 {
     refresh();
 }
 
 void EmployeeModel::refresh()
 {
-    QString sql = R"(
-        SELECT
-            e.id,
-            e.last_name AS 'Фамилия',
-            e.first_name AS 'Имя',
-            IFNULL(e.middle_name, '') AS 'Отчество',
-            IFNULL(p.name, '-') AS 'Должность',
-            IFNULL(e.phone, '-') AS 'Телефон',
-            IFNULL(e.email, '-') AS 'Email',
-            e.hire_date AS 'Дата приёма'
-        FROM employees e
-        LEFT JOIN positions p ON e.position_id = p.id
-    )";
+    QString sql;
 
-    if (!m_showInactive) {
-        sql += " WHERE e.is_active = 1";
+    if (m_showInactive) {
+        // Показываем ТОЛЬКО уволенных сотрудников
+        sql = R"(
+            SELECT
+                e.id,
+                e.last_name AS 'Фамилия',
+                e.first_name AS 'Имя',
+                IFNULL(e.middle_name, '') AS 'Отчество',
+                IFNULL(p.name, '-') AS 'Должность',
+                IFNULL(e.phone, '-') AS 'Телефон',
+                IFNULL(e.email, '-') AS 'Email',
+                DATE_FORMAT(e.hire_date, '%d.%m.%Y') AS 'Дата приёма',
+                DATE_FORMAT(e.dismissal_date, '%d.%m.%Y') AS 'Дата увольнения'
+            FROM employees e
+            LEFT JOIN positions p ON e.position_id = p.id
+            WHERE e.is_active = 0
+        )";
+    } else {
+        // Показываем ТОЛЬКО активных сотрудников
+        sql = R"(
+            SELECT
+                e.id,
+                e.last_name AS 'Фамилия',
+                e.first_name AS 'Имя',
+                IFNULL(e.middle_name, '') AS 'Отчество',
+                IFNULL(p.name, '-') AS 'Должность',
+                IFNULL(e.phone, '-') AS 'Телефон',
+                IFNULL(e.email, '-') AS 'Email',
+                DATE_FORMAT(e.hire_date, '%d.%m.%Y') AS 'Дата приёма'
+            FROM employees e
+            LEFT JOIN positions p ON e.position_id = p.id
+            WHERE e.is_active = 1
+        )";
     }
+
+    // Применяем фильтр по должности если установлен
+    if (m_currentPositionFilter > 0) {
+        sql += QString(" AND e.position_id = %1").arg(m_currentPositionFilter);
+    }
+
     sql += " ORDER BY e.last_name, e.first_name";
 
     setQuery(sql, DatabaseManager::instance().database());
@@ -125,6 +151,22 @@ bool EmployeeModel::dismissEmployee(int id, const QDate& dismissalDate)
     return true;
 }
 
+bool EmployeeModel::reinstateEmployee(int id)
+{
+    QSqlQuery query(DatabaseManager::instance().database());
+
+    query.prepare("UPDATE employees SET is_active = 1, dismissal_date = NULL WHERE id = ?");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+        qWarning() << "Reinstate employee error:" << query.lastError().text();
+        return false;
+    }
+
+    refresh();
+    return true;
+}
+
 QVariantMap EmployeeModel::getEmployeeById(int id)
 {
     QVariantMap result;
@@ -192,32 +234,8 @@ QList<QPair<int, QString>> EmployeeModel::getEmployeesByPosition(int positionId)
 
 void EmployeeModel::setFilterByPosition(int positionId)
 {
-    QString sql = R"(
-        SELECT
-            e.id,
-            e.last_name AS 'Фамилия',
-            e.first_name AS 'Имя',
-            IFNULL(e.middle_name, '') AS 'Отчество',
-            IFNULL(p.name, '-') AS 'Должность',
-            IFNULL(e.phone, '-') AS 'Телефон',
-            IFNULL(e.email, '-') AS 'Email',
-            e.hire_date AS 'Дата приёма'
-        FROM employees e
-        LEFT JOIN positions p ON e.position_id = p.id
-        WHERE 1=1
-    )";
-
-    if (!m_showInactive) {
-        sql += " AND e.is_active = 1";
-    }
-
-    if (positionId > 0) {
-        sql += QString(" AND e.position_id = %1").arg(positionId);
-    }
-
-    sql += " ORDER BY e.last_name, e.first_name";
-
-    setQuery(sql, DatabaseManager::instance().database());
+    m_currentPositionFilter = positionId;
+    refresh();
 }
 
 void EmployeeModel::setShowInactive(bool show)

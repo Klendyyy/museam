@@ -19,13 +19,11 @@ public:
         LastName = 1,
         FirstName = 2,
         MiddleName = 3,
-        PositionId = 4,
-        PositionName = 5,
-        Phone = 6,
-        Email = 7,
-        HireDate = 8,
-        DismissalDate = 9,
-        IsActive = 10
+        PositionName = 4,
+        Phone = 5,
+        Email = 6,
+        HireDate = 7,
+        DismissalDate = 8  // Только когда показываются уволенные
     };
 
     void refresh();
@@ -34,6 +32,7 @@ public:
     bool updateEmployee(int id, const QVariantMap& data);
     bool deleteEmployee(int id);
     bool dismissEmployee(int id, const QDate& dismissalDate);
+    bool reinstateEmployee(int id);  // Восстановление уволенного сотрудника
 
     QVariantMap getEmployeeById(int id);
     QString getEmployeeFullName(int id);
@@ -43,11 +42,14 @@ public:
     void setFilterByPosition(int positionId);
     void setShowInactive(bool show);
 
+    bool isShowingInactive() const { return m_showInactive; }
+
 signals:
     void dataChanged();
 
 private:
     bool m_showInactive;
+    int m_currentPositionFilter;
 };
 
 #endif // EMPLOYEEMODEL_H
