@@ -1,3 +1,6 @@
+// Файл: src/widgets/exhibitwidget.h
+// ПОЛНОСТЬЮ ЗАМЕНИТЬ существующий файл
+
 #ifndef EXHIBITWIDGET_H
 #define EXHIBITWIDGET_H
 
@@ -6,6 +9,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QLabel>
 #include <QSortFilterProxyModel>
 
 class ExhibitModel;
@@ -16,7 +20,7 @@ class ExhibitWidget : public QWidget
 
 public:
     explicit ExhibitWidget(QWidget *parent = nullptr);
-    
+
     void refresh();
 
 private slots:
@@ -32,16 +36,18 @@ private slots:
 private:
     void setupUi();
     void loadFilters();
+    void updateCount();
     int getSelectedId();
-    
+
     QTableView *m_tableView;
     ExhibitModel *m_model;
     QSortFilterProxyModel *m_proxyModel;
-    
+
     QLineEdit *m_searchEdit;
     QComboBox *m_categoryCombo;
     QComboBox *m_statusCombo;
-    
+    QLabel *m_countLabel;
+
     QPushButton *m_addButton;
     QPushButton *m_editButton;
     QPushButton *m_deleteButton;

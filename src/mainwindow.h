@@ -20,8 +20,8 @@ class StorageWidget;
 class ReportsWidget;
 
 /**
- * @brief Главное окно приложения
- * 
+ * @brief Главное окно приложения "Система управления музеем"
+ *
  * Реализует навигацию между разделами:
  * - Панель управления (Dashboard)
  * - Экспонаты
@@ -47,10 +47,10 @@ private slots:
     void showEmployees();
     void showStorages();
     void showReports();
-    
+
     void about();
     void aboutQt();
-    
+
     void updateStatusBar();
 
 private:
@@ -61,10 +61,10 @@ private:
     void createStatusBar();
     void createWidgets();
     void applyStyles();
-    
+
     // Центральный виджет со стеком страниц
     QStackedWidget *m_stackedWidget;
-    
+
     // Виджеты разделов
     DashboardWidget *m_dashboardWidget;
     ExhibitWidget *m_exhibitWidget;
@@ -73,7 +73,7 @@ private:
     EmployeeWidget *m_employeeWidget;
     StorageWidget *m_storageWidget;
     ReportsWidget *m_reportsWidget;
-    
+
     // Действия для навигации
     QAction *m_dashboardAction;
     QAction *m_exhibitsAction;
@@ -82,17 +82,18 @@ private:
     QAction *m_employeesAction;
     QAction *m_storagesAction;
     QAction *m_reportsAction;
-    
+
     // Действия меню
     QAction *m_exitAction;
     QAction *m_aboutAction;
     QAction *m_aboutQtAction;
-    
+
     // Панель инструментов
     QToolBar *m_mainToolBar;
-    
+
     // Статусная строка
     QLabel *m_statusLabel;
+    QLabel *m_timeLabel;
     QLabel *m_userLabel;
 };
 
