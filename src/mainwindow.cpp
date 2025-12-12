@@ -1,3 +1,6 @@
+// Файл: src/mainwindow.cpp
+// Действие: ПОЛНОСТЬЮ ЗАМЕНИТЬ
+
 #include "mainwindow.h"
 #include "dashboardwidget.h"
 #include "exhibitwidget.h"
@@ -12,6 +15,7 @@
 #include <QMessageBox>
 #include <QIcon>
 #include <QActionGroup>
+#include <QDateTime>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,8 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     createToolBar();
     createStatusBar();
     createWidgets();
-    applyStyles();
-    
+
     showDashboard();
     updateStatusBar();
 }
@@ -34,61 +37,58 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
-    setWindowTitle(tr("Система управления музеем"));
-    setMinimumSize(1200, 800);
-    resize(1400, 900);
-    
-    // Центральный виджет
+    setWindowTitle(tr("🏛️ Система управления музеем"));
+    setMinimumSize(1280, 800);
+    resize(1440, 900);
+
     m_stackedWidget = new QStackedWidget(this);
     setCentralWidget(m_stackedWidget);
 }
 
 void MainWindow::createActions()
 {
-    // Навигация
-    m_dashboardAction = new QAction(tr("Панель управления"), this);
+    m_dashboardAction = new QAction(tr("📊 Главная"), this);
     m_dashboardAction->setShortcut(QKeySequence("Ctrl+1"));
-    m_dashboardAction->setStatusTip(tr("Перейти на панель управления"));
+    m_dashboardAction->setStatusTip(tr("Панель управления и статистика"));
     m_dashboardAction->setCheckable(true);
     connect(m_dashboardAction, &QAction::triggered, this, &MainWindow::showDashboard);
-    
-    m_exhibitsAction = new QAction(tr("Экспонаты"), this);
+
+    m_exhibitsAction = new QAction(tr("🖼️ Экспонаты"), this);
     m_exhibitsAction->setShortcut(QKeySequence("Ctrl+2"));
-    m_exhibitsAction->setStatusTip(tr("Управление экспонатами"));
+    m_exhibitsAction->setStatusTip(tr("Каталог экспонатов музея"));
     m_exhibitsAction->setCheckable(true);
     connect(m_exhibitsAction, &QAction::triggered, this, &MainWindow::showExhibits);
-    
-    m_collectionsAction = new QAction(tr("Коллекции"), this);
+
+    m_collectionsAction = new QAction(tr("📁 Коллекции"), this);
     m_collectionsAction->setShortcut(QKeySequence("Ctrl+3"));
     m_collectionsAction->setStatusTip(tr("Управление коллекциями"));
     m_collectionsAction->setCheckable(true);
     connect(m_collectionsAction, &QAction::triggered, this, &MainWindow::showCollections);
-    
-    m_exhibitionsAction = new QAction(tr("Выставки"), this);
+
+    m_exhibitionsAction = new QAction(tr("🎭 Выставки"), this);
     m_exhibitionsAction->setShortcut(QKeySequence("Ctrl+4"));
-    m_exhibitionsAction->setStatusTip(tr("Управление выставками"));
+    m_exhibitionsAction->setStatusTip(tr("Планирование выставок"));
     m_exhibitionsAction->setCheckable(true);
     connect(m_exhibitionsAction, &QAction::triggered, this, &MainWindow::showExhibitions);
-    
-    m_employeesAction = new QAction(tr("Сотрудники"), this);
+
+    m_employeesAction = new QAction(tr("👥 Сотрудники"), this);
     m_employeesAction->setShortcut(QKeySequence("Ctrl+5"));
-    m_employeesAction->setStatusTip(tr("Управление сотрудниками"));
+    m_employeesAction->setStatusTip(tr("Управление персоналом"));
     m_employeesAction->setCheckable(true);
     connect(m_employeesAction, &QAction::triggered, this, &MainWindow::showEmployees);
-    
-    m_storagesAction = new QAction(tr("Хранилища"), this);
+
+    m_storagesAction = new QAction(tr("📦 Хранилища"), this);
     m_storagesAction->setShortcut(QKeySequence("Ctrl+6"));
-    m_storagesAction->setStatusTip(tr("Управление хранилищами"));
+    m_storagesAction->setStatusTip(tr("Места хранения экспонатов"));
     m_storagesAction->setCheckable(true);
     connect(m_storagesAction, &QAction::triggered, this, &MainWindow::showStorages);
-    
-    m_reportsAction = new QAction(tr("Отчёты"), this);
+
+    m_reportsAction = new QAction(tr("📈 Отчёты"), this);
     m_reportsAction->setShortcut(QKeySequence("Ctrl+7"));
     m_reportsAction->setStatusTip(tr("Формирование отчётов"));
     m_reportsAction->setCheckable(true);
     connect(m_reportsAction, &QAction::triggered, this, &MainWindow::showReports);
-    
-    // Группа для взаимоисключающего выбора
+
     QActionGroup *navGroup = new QActionGroup(this);
     navGroup->addAction(m_dashboardAction);
     navGroup->addAction(m_exhibitsAction);
@@ -97,17 +97,16 @@ void MainWindow::createActions()
     navGroup->addAction(m_employeesAction);
     navGroup->addAction(m_storagesAction);
     navGroup->addAction(m_reportsAction);
-    
-    // Действия меню
+
     m_exitAction = new QAction(tr("Выход"), this);
     m_exitAction->setShortcut(QKeySequence::Quit);
     m_exitAction->setStatusTip(tr("Выйти из приложения"));
     connect(m_exitAction, &QAction::triggered, this, &QMainWindow::close);
-    
+
     m_aboutAction = new QAction(tr("О программе"), this);
     m_aboutAction->setStatusTip(tr("Информация о программе"));
     connect(m_aboutAction, &QAction::triggered, this, &MainWindow::about);
-    
+
     m_aboutQtAction = new QAction(tr("О Qt"), this);
     m_aboutQtAction->setStatusTip(tr("Информация о Qt"));
     connect(m_aboutQtAction, &QAction::triggered, this, &MainWindow::aboutQt);
@@ -115,11 +114,9 @@ void MainWindow::createActions()
 
 void MainWindow::createMenus()
 {
-    // Меню Файл
     QMenu *fileMenu = menuBar()->addMenu(tr("&Файл"));
     fileMenu->addAction(m_exitAction);
-    
-    // Меню Навигация
+
     QMenu *navMenu = menuBar()->addMenu(tr("&Навигация"));
     navMenu->addAction(m_dashboardAction);
     navMenu->addSeparator();
@@ -131,8 +128,7 @@ void MainWindow::createMenus()
     navMenu->addAction(m_storagesAction);
     navMenu->addSeparator();
     navMenu->addAction(m_reportsAction);
-    
-    // Меню Справка
+
     QMenu *helpMenu = menuBar()->addMenu(tr("&Справка"));
     helpMenu->addAction(m_aboutAction);
     helpMenu->addAction(m_aboutQtAction);
@@ -143,8 +139,8 @@ void MainWindow::createToolBar()
     m_mainToolBar = addToolBar(tr("Навигация"));
     m_mainToolBar->setMovable(false);
     m_mainToolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    m_mainToolBar->setIconSize(QSize(24, 24));
-    
+    m_mainToolBar->setIconSize(QSize(20, 20));
+
     m_mainToolBar->addAction(m_dashboardAction);
     m_mainToolBar->addSeparator();
     m_mainToolBar->addAction(m_exhibitsAction);
@@ -159,10 +155,14 @@ void MainWindow::createToolBar()
 
 void MainWindow::createStatusBar()
 {
-    m_statusLabel = new QLabel(tr("Готово"));
-    m_userLabel = new QLabel(tr("Пользователь: Администратор"));
-    
+    m_statusLabel = new QLabel();
+    m_userLabel = new QLabel(tr("👤 Администратор"));
+
+    QLabel *timeLabel = new QLabel();
+    timeLabel->setText(QDateTime::currentDateTime().toString("dd.MM.yyyy HH:mm"));
+
     statusBar()->addWidget(m_statusLabel, 1);
+    statusBar()->addPermanentWidget(timeLabel);
     statusBar()->addPermanentWidget(m_userLabel);
 }
 
@@ -175,7 +175,7 @@ void MainWindow::createWidgets()
     m_employeeWidget = new EmployeeWidget(this);
     m_storageWidget = new StorageWidget(this);
     m_reportsWidget = new ReportsWidget(this);
-    
+
     m_stackedWidget->addWidget(m_dashboardWidget);
     m_stackedWidget->addWidget(m_exhibitWidget);
     m_stackedWidget->addWidget(m_collectionWidget);
@@ -183,165 +183,14 @@ void MainWindow::createWidgets()
     m_stackedWidget->addWidget(m_employeeWidget);
     m_stackedWidget->addWidget(m_storageWidget);
     m_stackedWidget->addWidget(m_reportsWidget);
-    
-    // Подключаем сигналы для обновления статуса
-    connect(m_dashboardWidget, &DashboardWidget::statusMessage, 
+
+    connect(m_dashboardWidget, &DashboardWidget::statusMessage,
             m_statusLabel, &QLabel::setText);
 }
 
 void MainWindow::applyStyles()
 {
-    QString styleSheet = R"(
-        QMainWindow {
-            background-color: #f5f5f5;
-        }
-        
-        QToolBar {
-            background-color: #2c3e50;
-            border: none;
-            spacing: 5px;
-            padding: 5px;
-        }
-        
-        QToolBar QToolButton {
-            background-color: transparent;
-            color: #ecf0f1;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
-        QToolBar QToolButton:hover {
-            background-color: #34495e;
-        }
-        
-        QToolBar QToolButton:checked {
-            background-color: #3498db;
-        }
-        
-        QMenuBar {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-        }
-        
-        QMenuBar::item:selected {
-            background-color: #34495e;
-        }
-        
-        QMenu {
-            background-color: #fff;
-            border: 1px solid #bdc3c7;
-        }
-        
-        QMenu::item:selected {
-            background-color: #3498db;
-            color: #fff;
-        }
-        
-        QStatusBar {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-        }
-        
-        QTableView {
-            gridline-color: #bdc3c7;
-            selection-background-color: #3498db;
-            selection-color: #fff;
-            alternate-background-color: #f9f9f9;
-        }
-        
-        QTableView::item:hover {
-            background-color: #e8f4fc;
-        }
-        
-        QHeaderView::section {
-            background-color: #34495e;
-            color: #fff;
-            padding: 8px;
-            border: none;
-            font-weight: bold;
-        }
-        
-        QPushButton {
-            background-color: #3498db;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
-        QPushButton:hover {
-            background-color: #2980b9;
-        }
-        
-        QPushButton:pressed {
-            background-color: #2472a4;
-        }
-        
-        QPushButton:disabled {
-            background-color: #bdc3c7;
-        }
-        
-        QPushButton#deleteButton {
-            background-color: #e74c3c;
-        }
-        
-        QPushButton#deleteButton:hover {
-            background-color: #c0392b;
-        }
-        
-        QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateEdit, QComboBox {
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            padding: 6px;
-            background-color: #fff;
-        }
-        
-        QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, 
-        QDoubleSpinBox:focus, QDateEdit:focus, QComboBox:focus {
-            border-color: #3498db;
-        }
-        
-        QGroupBox {
-            font-weight: bold;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            margin-top: 10px;
-            padding-top: 10px;
-        }
-        
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 5px;
-        }
-        
-        QTabWidget::pane {
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-        }
-        
-        QTabBar::tab {
-            background-color: #ecf0f1;
-            padding: 8px 16px;
-            margin-right: 2px;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-        }
-        
-        QTabBar::tab:selected {
-            background-color: #3498db;
-            color: #fff;
-        }
-        
-        QTabBar::tab:hover:!selected {
-            background-color: #bdc3c7;
-        }
-    )";
-    
-    setStyleSheet(styleSheet);
+    // Стили теперь применяются глобально в main.cpp
 }
 
 void MainWindow::showDashboard()
@@ -349,7 +198,7 @@ void MainWindow::showDashboard()
     m_stackedWidget->setCurrentWidget(m_dashboardWidget);
     m_dashboardAction->setChecked(true);
     m_dashboardWidget->refresh();
-    m_statusLabel->setText(tr("Панель управления"));
+    m_statusLabel->setText(tr("📊 Панель управления"));
 }
 
 void MainWindow::showExhibits()
@@ -357,7 +206,7 @@ void MainWindow::showExhibits()
     m_stackedWidget->setCurrentWidget(m_exhibitWidget);
     m_exhibitsAction->setChecked(true);
     m_exhibitWidget->refresh();
-    m_statusLabel->setText(tr("Управление экспонатами"));
+    m_statusLabel->setText(tr("🖼️ Каталог экспонатов"));
 }
 
 void MainWindow::showCollections()
@@ -365,7 +214,7 @@ void MainWindow::showCollections()
     m_stackedWidget->setCurrentWidget(m_collectionWidget);
     m_collectionsAction->setChecked(true);
     m_collectionWidget->refresh();
-    m_statusLabel->setText(tr("Управление коллекциями"));
+    m_statusLabel->setText(tr("📁 Управление коллекциями"));
 }
 
 void MainWindow::showExhibitions()
@@ -373,7 +222,7 @@ void MainWindow::showExhibitions()
     m_stackedWidget->setCurrentWidget(m_exhibitionWidget);
     m_exhibitionsAction->setChecked(true);
     m_exhibitionWidget->refresh();
-    m_statusLabel->setText(tr("Управление выставками"));
+    m_statusLabel->setText(tr("🎭 Управление выставками"));
 }
 
 void MainWindow::showEmployees()
@@ -381,7 +230,7 @@ void MainWindow::showEmployees()
     m_stackedWidget->setCurrentWidget(m_employeeWidget);
     m_employeesAction->setChecked(true);
     m_employeeWidget->refresh();
-    m_statusLabel->setText(tr("Управление сотрудниками"));
+    m_statusLabel->setText(tr("👥 Управление сотрудниками"));
 }
 
 void MainWindow::showStorages()
@@ -389,32 +238,42 @@ void MainWindow::showStorages()
     m_stackedWidget->setCurrentWidget(m_storageWidget);
     m_storagesAction->setChecked(true);
     m_storageWidget->refresh();
-    m_statusLabel->setText(tr("Управление хранилищами"));
+    m_statusLabel->setText(tr("📦 Управление хранилищами"));
 }
 
 void MainWindow::showReports()
 {
     m_stackedWidget->setCurrentWidget(m_reportsWidget);
     m_reportsAction->setChecked(true);
-    m_statusLabel->setText(tr("Формирование отчётов"));
+    m_statusLabel->setText(tr("📈 Формирование отчётов"));
 }
 
 void MainWindow::about()
 {
-    QMessageBox::about(this, tr("О программе"),
-        tr("<h2>Система управления музеем</h2>"
-           "<p>Версия 1.0.0</p>"
-           "<p>Приложение для учёта и управления музейными фондами.</p>"
-           "<p><b>Возможности:</b></p>"
-           "<ul>"
-           "<li>Учёт экспонатов</li>"
-           "<li>Управление коллекциями</li>"
-           "<li>Организация выставок</li>"
-           "<li>Учёт реставрационных работ</li>"
-           "<li>Управление хранилищами</li>"
-           "<li>Формирование отчётов</li>"
+    QMessageBox aboutBox(this);
+    aboutBox.setWindowTitle(tr("О программе"));
+    aboutBox.setIconPixmap(QPixmap());
+    aboutBox.setText(
+        tr("<div style='text-align: center;'>"
+           "<h2 style='color: #1a202c; margin-bottom: 8px;'>🏛️ Система управления музеем</h2>"
+           "<p style='color: #718096; font-size: 14px;'>Версия 1.0.0</p>"
+           "</div>"
+           "<hr style='border: 1px solid #e2e8f0; margin: 16px 0;'>"
+           "<p style='color: #4a5568;'>Комплексное решение для автоматизации учёта и управления музейными фондами.</p>"
+           "<h3 style='color: #2d3748; margin-top: 16px;'>Возможности:</h3>"
+           "<ul style='color: #4a5568;'>"
+           "<li>📦 Учёт и каталогизация экспонатов</li>"
+           "<li>📁 Формирование и управление коллекциями</li>"
+           "<li>🎭 Планирование и проведение выставок</li>"
+           "<li>🔧 Контроль реставрационных работ</li>"
+           "<li>📍 Управление местами хранения</li>"
+           "<li>👥 Учёт персонала</li>"
+           "<li>📊 Аналитика и отчётность</li>"
            "</ul>"
-           "<p>© 2024 Курсовой проект</p>"));
+           "<hr style='border: 1px solid #e2e8f0; margin: 16px 0;'>"
+           "<p style='color: #718096; font-size: 12px; text-align: center;'>© 2024 Курсовой проект</p>"));
+    aboutBox.setStandardButtons(QMessageBox::Ok);
+    aboutBox.exec();
 }
 
 void MainWindow::aboutQt()
@@ -425,7 +284,7 @@ void MainWindow::aboutQt()
 void MainWindow::updateStatusBar()
 {
     DatabaseManager& db = DatabaseManager::instance();
-    QString info = QString(tr("Экспонатов: %1 | Коллекций: %2 | Выставок: %3 | Сотрудников: %4"))
+    QString info = QString(tr("📦 Экспонатов: %1  |  📁 Коллекций: %2  |  🎭 Выставок: %3  |  👥 Сотрудников: %4"))
                        .arg(db.getExhibitCount())
                        .arg(db.getCollectionCount())
                        .arg(db.getExhibitionCount())

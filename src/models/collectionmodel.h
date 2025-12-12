@@ -1,37 +1,36 @@
 #ifndef COLLECTIONMODEL_H
 #define COLLECTIONMODEL_H
 
-#include <QSqlRelationalTableModel>
+#include <QSqlQueryModel>
+#include <QVariantMap>
 
-class CollectionModel : public QSqlRelationalTableModel
+class CollectionModel : public QSqlQueryModel
 {
     Q_OBJECT
 
 public:
     explicit CollectionModel(QObject *parent = nullptr);
-    
+
     enum Columns {
         Id = 0,
-        Name,
-        Description,
-        CuratorId,
-        CreationDate,
-        IsPermanent,
-        IsActive,
-        CreatedAt,
-        UpdatedAt
+        Name = 1,
+        Description = 2,
+        CuratorId = 3,
+        CuratorName = 4,
+        CreationDate = 5,
+        IsPermanent = 6,
+        IsActive = 7
     };
-    
-    void setupModel();
+
     void refresh();
-    
+
     bool addCollection(const QVariantMap& data);
     bool updateCollection(int id, const QVariantMap& data);
     bool deleteCollection(int id);
-    
+
     QVariantMap getCollectionById(int id);
     int getExhibitCount(int collectionId);
-    
+
 signals:
     void dataChanged();
 };

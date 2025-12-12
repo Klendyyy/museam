@@ -1,9 +1,13 @@
+// Файл: src/widgets/dashboardwidget.cpp
+// Действие: ПОЛНОСТЬЮ ЗАМЕНИТЬ
+
 #include "dashboardwidget.h"
 #include "databasemanager.h"
 #include <QSqlQueryModel>
 #include <QHeaderView>
 #include <QScrollArea>
 #include <QGroupBox>
+#include <QGraphicsDropShadowEffect>
 
 DashboardWidget::DashboardWidget(QWidget *parent)
     : QWidget(parent)
@@ -15,119 +19,182 @@ DashboardWidget::DashboardWidget(QWidget *parent)
 void DashboardWidget::setupUi()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(20);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
-    
+    mainLayout->setSpacing(24);
+    mainLayout->setContentsMargins(24, 24, 24, 24);
+
     // Заголовок
+    QWidget *headerWidget = new QWidget();
+    QVBoxLayout *headerLayout = new QVBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(4);
+
     QLabel *titleLabel = new QLabel(tr("Панель управления"));
-    titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;");
-    mainLayout->addWidget(titleLabel);
-    
+    titleLabel->setObjectName("titleLabel");
+    titleLabel->setStyleSheet("font-size: 28px; font-weight: 700; color: #1a202c;");
+    headerLayout->addWidget(titleLabel);
+
+    QLabel *subtitleLabel = new QLabel(tr("Обзор состояния музейных фондов"));
+    subtitleLabel->setObjectName("subtitleLabel");
+    subtitleLabel->setStyleSheet("font-size: 14px; color: #718096;");
+    headerLayout->addWidget(subtitleLabel);
+
+    mainLayout->addWidget(headerWidget);
+
     // Карточки статистики
-    QGridLayout *statsLayout = new QGridLayout();
-    statsLayout->setSpacing(15);
-    
-    // Создаём карточки
-    QFrame *exhibitCard = createStatCard(tr("Экспонаты"), "0", "#3498db");
+    QHBoxLayout *statsLayout = new QHBoxLayout();
+    statsLayout->setSpacing(16);
+
+    QFrame *exhibitCard = createStatCard(tr("Экспонаты"), "0", "#3182ce", "🖼️");
     m_exhibitCountLabel = exhibitCard->findChild<QLabel*>("valueLabel");
-    
-    QFrame *collectionCard = createStatCard(tr("Коллекции"), "0", "#2ecc71");
+
+    QFrame *collectionCard = createStatCard(tr("Коллекции"), "0", "#38a169", "📁");
     m_collectionCountLabel = collectionCard->findChild<QLabel*>("valueLabel");
-    
-    QFrame *exhibitionCard = createStatCard(tr("Активные выставки"), "0", "#9b59b6");
+
+    QFrame *exhibitionCard = createStatCard(tr("Активные выставки"), "0", "#805ad5", "🎭");
     m_exhibitionCountLabel = exhibitionCard->findChild<QLabel*>("valueLabel");
-    
-    QFrame *employeeCard = createStatCard(tr("Сотрудники"), "0", "#e67e22");
+
+    QFrame *employeeCard = createStatCard(tr("Сотрудники"), "0", "#dd6b20", "👥");
     m_employeeCountLabel = employeeCard->findChild<QLabel*>("valueLabel");
-    
-    QFrame *displayCard = createStatCard(tr("На выставке"), "0", "#1abc9c");
+
+    QFrame *displayCard = createStatCard(tr("На выставке"), "0", "#319795", "✨");
     m_onDisplayLabel = displayCard->findChild<QLabel*>("valueLabel");
-    
-    QFrame *restorationCard = createStatCard(tr("На реставрации"), "0", "#e74c3c");
+
+    QFrame *restorationCard = createStatCard(tr("На реставрации"), "0", "#e53e3e", "🔧");
     m_inRestorationLabel = restorationCard->findChild<QLabel*>("valueLabel");
-    
-    statsLayout->addWidget(exhibitCard, 0, 0);
-    statsLayout->addWidget(collectionCard, 0, 1);
-    statsLayout->addWidget(exhibitionCard, 0, 2);
-    statsLayout->addWidget(employeeCard, 0, 3);
-    statsLayout->addWidget(displayCard, 0, 4);
-    statsLayout->addWidget(restorationCard, 0, 5);
-    
+
+    statsLayout->addWidget(exhibitCard);
+    statsLayout->addWidget(collectionCard);
+    statsLayout->addWidget(exhibitionCard);
+    statsLayout->addWidget(employeeCard);
+    statsLayout->addWidget(displayCard);
+    statsLayout->addWidget(restorationCard);
+
     mainLayout->addLayout(statsLayout);
-    
-    // Горизонтальный layout для таблиц
+
+    // Таблицы
     QHBoxLayout *tablesLayout = new QHBoxLayout();
-    tablesLayout->setSpacing(15);
-    
+    tablesLayout->setSpacing(16);
+
     // Последние экспонаты
-    QGroupBox *recentGroup = new QGroupBox(tr("Последние добавленные экспонаты"));
-    QVBoxLayout *recentLayout = new QVBoxLayout(recentGroup);
+    QWidget *recentWidget = createTableCard(tr("Последние добавленные экспонаты"), "🕐");
+    QVBoxLayout *recentLayout = qobject_cast<QVBoxLayout*>(recentWidget->layout());
     m_recentExhibitsTable = new QTableView();
-    m_recentExhibitsTable->setAlternatingRowColors(true);
-    m_recentExhibitsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_recentExhibitsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_recentExhibitsTable->horizontalHeader()->setStretchLastSection(true);
-    m_recentExhibitsTable->verticalHeader()->setVisible(false);
+    setupTableStyle(m_recentExhibitsTable);
     recentLayout->addWidget(m_recentExhibitsTable);
-    tablesLayout->addWidget(recentGroup);
-    
+    tablesLayout->addWidget(recentWidget);
+
     // Активные выставки
-    QGroupBox *exhibitionsGroup = new QGroupBox(tr("Текущие выставки"));
-    QVBoxLayout *exhibitionsLayout = new QVBoxLayout(exhibitionsGroup);
+    QWidget *exhibitionsWidget = createTableCard(tr("Текущие выставки"), "🎭");
+    QVBoxLayout *exhibitionsLayout = qobject_cast<QVBoxLayout*>(exhibitionsWidget->layout());
     m_activeExhibitionsTable = new QTableView();
-    m_activeExhibitionsTable->setAlternatingRowColors(true);
-    m_activeExhibitionsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_activeExhibitionsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_activeExhibitionsTable->horizontalHeader()->setStretchLastSection(true);
-    m_activeExhibitionsTable->verticalHeader()->setVisible(false);
+    setupTableStyle(m_activeExhibitionsTable);
     exhibitionsLayout->addWidget(m_activeExhibitionsTable);
-    tablesLayout->addWidget(exhibitionsGroup);
-    
-    // Реставрации в процессе
-    QGroupBox *restorationGroup = new QGroupBox(tr("Реставрация в процессе"));
-    QVBoxLayout *restorationLayout = new QVBoxLayout(restorationGroup);
+    tablesLayout->addWidget(exhibitionsWidget);
+
+    // Реставрации
+    QWidget *restorationWidget = createTableCard(tr("Реставрация в процессе"), "🔧");
+    QVBoxLayout *restorationLayout = qobject_cast<QVBoxLayout*>(restorationWidget->layout());
     m_restorationTable = new QTableView();
-    m_restorationTable->setAlternatingRowColors(true);
-    m_restorationTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_restorationTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_restorationTable->horizontalHeader()->setStretchLastSection(true);
-    m_restorationTable->verticalHeader()->setVisible(false);
+    setupTableStyle(m_restorationTable);
     restorationLayout->addWidget(m_restorationTable);
-    tablesLayout->addWidget(restorationGroup);
-    
+    tablesLayout->addWidget(restorationWidget);
+
     mainLayout->addLayout(tablesLayout, 1);
 }
 
-QFrame* DashboardWidget::createStatCard(const QString& title, const QString& value, 
+void DashboardWidget::setupTableStyle(QTableView *table)
+{
+    table->setAlternatingRowColors(true);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->verticalHeader()->setVisible(false);
+    table->setShowGrid(false);
+    table->setFrameShape(QFrame::NoFrame);
+}
+
+QWidget* DashboardWidget::createTableCard(const QString& title, const QString& icon)
+{
+    QWidget *card = new QWidget();
+    card->setStyleSheet(
+        "QWidget { background-color: #ffffff; border-radius: 12px; }"
+        );
+
+    QVBoxLayout *layout = new QVBoxLayout(card);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(16);
+
+    QLabel *titleLabel = new QLabel(icon + " " + title);
+    titleLabel->setStyleSheet(
+        "font-size: 16px; font-weight: 600; color: #2d3748; padding-bottom: 8px;"
+        "border-bottom: 2px solid #e2e8f0;"
+        );
+    layout->addWidget(titleLabel);
+
+    // Добавляем тень
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect();
+    shadow->setBlurRadius(20);
+    shadow->setColor(QColor(0, 0, 0, 30));
+    shadow->setOffset(0, 4);
+    card->setGraphicsEffect(shadow);
+
+    return card;
+}
+
+QFrame* DashboardWidget::createStatCard(const QString& title, const QString& value,
                                         const QString& color, const QString& icon)
 {
-    Q_UNUSED(icon)
-    
     QFrame *card = new QFrame();
     card->setObjectName("statCard");
     card->setStyleSheet(QString(
-        "QFrame#statCard {"
-        "    background-color: %1;"
-        "    border-radius: 8px;"
-        "    padding: 15px;"
-        "}"
-    ).arg(color));
-    card->setMinimumSize(150, 100);
-    
+                            "QFrame#statCard {"
+                            "    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
+                            "        stop:0 %1, stop:1 %2);"
+                            "    border-radius: 12px;"
+                            "    padding: 20px;"
+                            "}"
+                            ).arg(color).arg(QColor(color).darker(120).name()));
+    card->setMinimumSize(180, 120);
+    card->setMaximumHeight(140);
+
+    // Тень для карточки
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect();
+    shadow->setBlurRadius(20);
+    shadow->setColor(QColor(color).darker(150));
+    shadow->setOffset(0, 8);
+    card->setGraphicsEffect(shadow);
+
     QVBoxLayout *layout = new QVBoxLayout(card);
-    layout->setSpacing(5);
-    
-    QLabel *titleLabel = new QLabel(title);
-    titleLabel->setStyleSheet("color: rgba(255,255,255,0.8); font-size: 12px;");
-    layout->addWidget(titleLabel);
-    
+    layout->setSpacing(8);
+    layout->setContentsMargins(20, 16, 20, 16);
+
+    // Иконка и заголовок
+    QHBoxLayout *headerLayout = new QHBoxLayout();
+
+    QLabel *iconLabel = new QLabel(icon);
+    iconLabel->setStyleSheet("font-size: 24px; background: transparent;");
+    headerLayout->addWidget(iconLabel);
+
+    headerLayout->addStretch();
+    layout->addLayout(headerLayout);
+
+    // Значение
     QLabel *valueLabel = new QLabel(value);
     valueLabel->setObjectName("valueLabel");
-    valueLabel->setStyleSheet("color: white; font-size: 28px; font-weight: bold;");
+    valueLabel->setStyleSheet(
+        "color: white; font-size: 36px; font-weight: 700; background: transparent;"
+        );
     layout->addWidget(valueLabel);
-    
+
+    // Название
+    QLabel *titleLabel = new QLabel(title);
+    titleLabel->setStyleSheet(
+        "color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500; background: transparent;"
+        );
+    layout->addWidget(titleLabel);
+
     layout->addStretch();
-    
+
     return card;
 }
 
@@ -142,7 +209,7 @@ void DashboardWidget::refresh()
 void DashboardWidget::updateStatistics()
 {
     DatabaseManager& db = DatabaseManager::instance();
-    
+
     m_exhibitCountLabel->setText(QString::number(db.getExhibitCount()));
     m_collectionCountLabel->setText(QString::number(db.getCollectionCount()));
     m_exhibitionCountLabel->setText(QString::number(db.getExhibitionCount()));
@@ -155,14 +222,14 @@ void DashboardWidget::loadRecentExhibits()
 {
     QSqlQueryModel *model = new QSqlQueryModel(this);
     model->setQuery(R"(
-        SELECT inventory_number as 'Инв. номер', 
-               name as 'Название', 
-               DATE(created_at) as 'Дата добавления'
-        FROM exhibits 
-        ORDER BY created_at DESC 
+        SELECT inventory_number as 'Инв. номер',
+               name as 'Название',
+               DATE_FORMAT(created_at, '%d.%m.%Y') as 'Добавлен'
+        FROM exhibits
+        ORDER BY created_at DESC
         LIMIT 10
     )", DatabaseManager::instance().database());
-    
+
     m_recentExhibitsTable->setModel(model);
     m_recentExhibitsTable->resizeColumnsToContents();
 }
@@ -171,16 +238,16 @@ void DashboardWidget::loadActiveExhibitions()
 {
     QSqlQueryModel *model = new QSqlQueryModel(this);
     model->setQuery(R"(
-        SELECT name as 'Название', 
+        SELECT name as 'Название',
                location as 'Место',
-               start_date as 'Начало',
-               end_date as 'Окончание'
-        FROM exhibitions 
+               DATE_FORMAT(start_date, '%d.%m.%Y') as 'Начало',
+               DATE_FORMAT(end_date, '%d.%m.%Y') as 'Окончание'
+        FROM exhibitions
         WHERE status = 'Активна'
         ORDER BY start_date DESC
         LIMIT 10
     )", DatabaseManager::instance().database());
-    
+
     m_activeExhibitionsTable->setModel(model);
     m_activeExhibitionsTable->resizeColumnsToContents();
 }
@@ -191,7 +258,7 @@ void DashboardWidget::loadRestorationInProgress()
     model->setQuery(R"(
         SELECT e.name as 'Экспонат',
                rt.name as 'Тип работ',
-               r.start_date as 'Начало',
+               DATE_FORMAT(r.start_date, '%d.%m.%Y') as 'Начало',
                emp.last_name as 'Реставратор'
         FROM restorations r
         JOIN exhibits e ON r.exhibit_id = e.id
@@ -201,7 +268,7 @@ void DashboardWidget::loadRestorationInProgress()
         ORDER BY r.start_date DESC
         LIMIT 10
     )", DatabaseManager::instance().database());
-    
+
     m_restorationTable->setModel(model);
     m_restorationTable->resizeColumnsToContents();
 }

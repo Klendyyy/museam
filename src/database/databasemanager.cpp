@@ -1,5 +1,5 @@
 #include "databasemanager.h"
-#include "QCoreApplication"
+#include <QDebug>
 
 DatabaseManager::DatabaseManager(QObject *parent)
     : QObject(parent)
@@ -27,19 +27,20 @@ bool DatabaseManager::initialize(const QString& host, int port,
         return true;
     }
 
-    // Используем драйвер MySQL (работает и с MariaDB)
+    // Проверяем доступные драйверы
+    qDebug() << "Доступные SQL драйверы:" << QSqlDatabase::drivers();
+
     m_database = QSqlDatabase::addDatabase("QMYSQL");
     m_database.setHostName(host);
     m_database.setPort(port);
     m_database.setDatabaseName(database);
     m_database.setUserName(user);
     m_database.setPassword(password);
-
-    // Настройки для корректной работы с UTF-8
-    m_database.setConnectOptions("MYSQL_OPT_RECONNECT=1");
+    m_database.setConnectOptions("MYSQL_OPT_RECONNECT=1;MYSQL_OPT_CONNECT_TIMEOUT=5");
 
     if (!m_database.open()) {
         qCritical() << "Ошибка подключения к БД:" << m_database.lastError().text();
+        qCritical() << "Драйвер:" << m_database.driverName();
         return false;
     }
 
@@ -47,9 +48,17 @@ bool DatabaseManager::initialize(const QString& host, int port,
     QSqlQuery query(m_database);
     query.exec("SET NAMES 'utf8mb4'");
     query.exec("SET CHARACTER SET utf8mb4");
+    query.exec("SET character_set_connection=utf8mb4");
 
     m_isInitialized = true;
-    qInfo() << "Подключение к MariaDB установлено";
+    qDebug() << "Успешное подключение к MariaDB";
+
+    // Тестовый запрос
+    query.exec("SELECT VERSION()");
+    if (query.next()) {
+        qDebug() << "Версия сервера:" << query.value(0).toString();
+    }
+
     return true;
 }
 
@@ -75,7 +84,8 @@ bool DatabaseManager::executeQuery(const QString& queryStr)
 {
     QSqlQuery query(m_database);
     if (!query.exec(queryStr)) {
-        qWarning() << "Ошибка выполнения запроса:" << query.lastError().text();
+        qWarning() << "Ошибка запроса:" << query.lastError().text();
+        qWarning() << "SQL:" << queryStr;
         return false;
     }
     return true;
@@ -86,6 +96,7 @@ QSqlQuery DatabaseManager::execSelect(const QString& queryStr)
     QSqlQuery query(m_database);
     if (!query.exec(queryStr)) {
         qWarning() << "Ошибка SELECT:" << query.lastError().text();
+        qWarning() << "SQL:" << queryStr;
     }
     return query;
 }
