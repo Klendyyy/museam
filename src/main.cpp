@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     int     port     = 3306;
     QString database = "museum";
     QString user     = "root";
-    QString password = "";  // <-- ВВЕДИ СВОЙ ПАРОЛЬ
+    QString password = "root";  // <-- ВВЕДИ СВОЙ ПАРОЛЬ
     // ========================================
 
     app.setApplicationName("Система управления музеем");
